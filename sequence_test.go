@@ -228,7 +228,7 @@ func TestSerialization(t *testing.T) {
 }
 
 // Write a sequence to disk to be loaded later.
-func ExampleSequence_dump() {
+func ExampleSequence_Dump() {
 
 	seq := new(Sequence)
 	seq.Init()
