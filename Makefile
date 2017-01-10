@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 # Export targets not associated with files.
-.PHONY: fmt test citest clean
+.PHONY: fmt test clean
 
 # Format the Go source code
 fmt:
