@@ -27,7 +27,7 @@ Sequences maintain their state and you can check if they've been started:
 
     counter.IsStarted()
 
-You can also reseet sequences to return them to a starting value:
+You can also reset sequences to return them to a starting value:
 
     counter.Restart()
 

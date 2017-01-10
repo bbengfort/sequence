@@ -7,14 +7,15 @@ import (
 
 const maxuint64 = ^uint64(0) - 1
 
-// Returns a new sequence from the package
+// New returns a new default sequence (infinite increment by 1 from 1).
 func New() *Sequence {
 	return &Sequence{0, 1, 1, maxuint64}
 }
 
 //=============================================================================
 
-// Implements an AutoIncrement counter class similar to PostgreSQL's sequence.
+// Sequence implements an AutoIncrement counter class similar to the
+// PostgreSQL sequence object.
 type Sequence struct {
 	current   uint64 // The current value of the sequence
 	increment uint64 // The value to increment by (usually 1)
@@ -22,7 +23,7 @@ type Sequence struct {
 	maxvalue  uint64 // The max value of the counter (usually bounded by type)
 }
 
-// What you can expect an Incrementer to do (and Sequences do this)
+// Incrementer defines the interface for sequence-like objects.
 type Incrementer interface {
 	Init(params ...uint64)    // Initialize the Incrementer with values
 	Next() (uint64, error)    // Get the next value in the sequence and update
@@ -33,7 +34,7 @@ type Incrementer interface {
 
 //=============================================================================
 
-// Initialize a sequence with uint64 params, ordered similarly to the struct
+// Init a sequence with uint64 params, ordered similarly to the struct
 func (s *Sequence) Init(params ...uint64) {
 	if len(params) > 0 {
 		s.current = params[0]
@@ -60,7 +61,7 @@ func (s *Sequence) Init(params ...uint64) {
 	}
 }
 
-// Update the sequence and return the next value
+// Next updates the sequence and return the next value
 func (s *Sequence) Next() (uint64, error) {
 	s.current += s.increment
 
@@ -82,7 +83,7 @@ func (s *Sequence) Restart() {
 	s.current = s.minvalue - s.increment
 }
 
-// Returns the current value of the sequence
+// Current returns the current value of the sequence
 func (s *Sequence) Current() (uint64, error) {
 	if !s.IsStarted() {
 		return 0, errors.New("Sequence is unstarted")
@@ -91,7 +92,7 @@ func (s *Sequence) Current() (uint64, error) {
 	return s.current, nil
 }
 
-// Returns the state of the sequence (started or unstarted)
+// IsStarted returns the state of the sequence (started or unstarted)
 func (s *Sequence) IsStarted() bool {
 	return !(s.current < s.minvalue) && s.current < s.maxvalue
 }
