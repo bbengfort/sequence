@@ -30,13 +30,7 @@ seq := sequence.New()
 idx, err := seq.Next()
 ```
 
-A bit more difficult is to create a monotonically decreasing sequence that starts at a specific value and ends when the counter reaches zero, as follows:
-
-```go
-seq := sequence.New(1000, 1, -1)
-```
-
-In fact a range can be specified using different arguments to New. For example, to specify a different maximal value:
+A range can be specified using different arguments to New. For example, to specify a different maximal value:
 
 ```go
 seq := sequence.New(1000)

@@ -168,7 +168,7 @@ func TestIsStarted(t *testing.T) {
 	}
 }
 
-// Test the string method using a test example
+// An example of the human readable state of a sequence.
 func ExampleSequence_String() {
 	seq, _ := New()
 
@@ -225,6 +225,43 @@ func TestSerialization(t *testing.T) {
 		t.Error("loaded sequence isn't started?!")
 	}
 
+}
+
+// Write a sequence to disk to be loaded later.
+func ExampleSequence_dump() {
+
+	seq := new(Sequence)
+	seq.Init()
+
+	for i := 0; i < 10; i++ {
+		seq.Next()
+	}
+
+	data, _ := seq.Dump()
+	fmt.Println(string(data))
+
+	// Output:
+	// {"current":10,"increment":1,"maxvalue":18446744073709551614,"minvalue":1}
+}
+
+// An example of sequence serialization.
+func ExampleSequence_Load() {
+
+	seq := new(Sequence)
+	seq.Init()
+
+	for i := 0; i < 10; i++ {
+		seq.Next()
+	}
+
+	data, _ := seq.Dump()
+
+	sequel := new(Sequence)
+	sequel.Load(data)
+	fmt.Println(sequel)
+
+	// Output:
+	// Sequence at 10, incremented by 1 between 1 and 18446744073709551614
 }
 
 //===========================================================================

@@ -10,7 +10,7 @@ const maxuint64 = ^uint64(0) - 1
 
 // MinimumBound specifies the smallest integer value of a Sequence object.
 // Note that the minimum bound is not zero because zero values denote
-// unintialized numeric values, and becasue counters generally do not index
+// unintialized numeric values, and because counters generally do not index
 // from zero, but rather from 1.
 const MinimumBound = 1
 
@@ -24,9 +24,9 @@ const MaximumBound = maxuint64
 //===========================================================================
 
 // Incrementer defines the interface for sequence-like objects. The primary
-// diference between incrementers and other state-like iterables is that error
+// diference between an Incrementer and other state-like iterables is that error
 // handling is critical, and as a result many interaction methods like Next()
-// and Restart() return an error. Incrementers usually keep the state as
+// and Restart() return an error. An Incrementer usually keep the state as
 // private as possible to ensure that it can't be tampered with accidentally,
 // and state is only revealed through the Current(), IsStarted(), and String()
 // methods.
