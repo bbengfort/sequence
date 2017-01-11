@@ -57,6 +57,25 @@ func TestNext(t *testing.T) {
 	}
 }
 
+// Example of the Basic Usage
+func ExampleSequence() {
+
+	seq, _ := New() // Create a new monotonically increasing counter
+
+	// Fetch the first 10 sequence ids.
+	for {
+		idx, _ := seq.Next()
+		if idx > 10 {
+			break
+		}
+
+		fmt.Printf("%d ", idx)
+	}
+
+	// Output:
+	// 1 2 3 4 5 6 7 8 9 10
+}
+
 // Test the restart functionality
 func TestRestart(t *testing.T) {
 	seq, err := New()
