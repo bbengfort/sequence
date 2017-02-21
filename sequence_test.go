@@ -126,6 +126,101 @@ func TestRestartInitError(t *testing.T) {
 	}
 }
 
+// Test the update functionality
+func TestUpdate(t *testing.T) {
+	seq, err := New()
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	for i := 0; i < 100; i++ {
+		_, e := seq.Next()
+		if e != nil {
+			t.Error("test function caused an unintended error!")
+		}
+	}
+
+	if seq.current != 100 {
+		t.Error("pre-restart assertion failed")
+	}
+
+	err = seq.Update(111)
+	if err != nil {
+		t.Error("could not update montonically increasing counter")
+	}
+
+	if seq.current != 111 {
+		t.Error("update was not effective")
+	}
+
+	n, e := seq.Next()
+	if e != nil {
+		t.Error(e.Error())
+	}
+	if n != 112 {
+		t.Error("sequence was not updated correctly!")
+	}
+}
+
+// Test update violation errors
+func TestBadUpdate(t *testing.T) {
+	seq, err := New()
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	for i := 0; i < 100; i++ {
+		_, e := seq.Next()
+		if e != nil {
+			t.Error("test function caused an unintended error!")
+		}
+	}
+
+	if seq.current != 100 {
+		t.Error("pre-restart assertion failed")
+	}
+
+	err = seq.Update(73)
+	if err == nil {
+		t.Error("no monotonically increasing error was returned!")
+	}
+
+	n, e := seq.Next()
+	if e != nil {
+		t.Error(e.Error())
+	}
+	if n != 101 {
+		t.Error("sequence was not updated correctly!")
+	}
+}
+
+// An example of updating a sequence.
+func ExampleSequence_Update() {
+	var idx uint64
+	seq, _ := New()
+
+	seq.Next()
+	idx, _ = seq.Current()
+	fmt.Println(idx)
+
+	seq.Update(42)
+	idx, _ = seq.Current()
+	fmt.Println(idx)
+
+	seq.Next()
+	idx, _ = seq.Current()
+	fmt.Println(idx)
+
+	err := seq.Update(42)
+	fmt.Println(err)
+
+	// Output:
+	// 1
+	// 42
+	// 43
+	// cannot decrease monotonically increasing sequence
+}
+
 // Test the get current state functionality
 func TestCurrent(t *testing.T) {
 	seq, err := New()
