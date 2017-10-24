@@ -674,15 +674,17 @@ func TestRange(t *testing.T) {
 //===========================================================================
 
 func BenchmarkSequence(b *testing.B) {
+	var s uint64
+	f := func(u uint64) {}
 
-	for i := 0; i < b.N; i++ {
-		seq, err := New()
-		if err != nil {
-			b.Error(err.Error())
-		}
-
-		for j := 0; j < b.N; j++ {
-			seq.Next()
-		}
+	seq, err := New()
+	if err != nil {
+		b.Error(err.Error())
 	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s, _ = seq.Next()
+	}
+	f(s)
+	b.ReportAllocs()
 }
