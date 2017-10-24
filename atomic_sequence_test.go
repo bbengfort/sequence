@@ -1,23 +1,20 @@
 package sequence
 
 import (
-	"fmt"
+	"math"
+	"sync"
 	"testing"
 )
 
-//===========================================================================
-// Basic Tests
-//===========================================================================
-
-// Ensure that the Sequence object implements the Incrementer interface.
+// Ensure that the AtomicSequence object implements the Incrementer interface.
 // This test is more of a compiler check since this code will fail on compile.
-func TestInterface(t *testing.T) {
-	var _ Incrementer = &Sequence{}
+func TestInterfaceAtomic(t *testing.T) {
+	var _ Incrementer = &AtomicSequence{}
 }
 
 // Test the creation of a default Sequence object.
-func TestNewDefault(t *testing.T) {
-	seq, err := New()
+func TestNewDefaultAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -40,8 +37,8 @@ func TestNewDefault(t *testing.T) {
 }
 
 //  Test the auto increment functionality
-func TestNext(t *testing.T) {
-	seq, err := New()
+func TestNextAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -57,28 +54,9 @@ func TestNext(t *testing.T) {
 	}
 }
 
-// Example of the Basic Usage
-func ExampleSequence() {
-
-	seq, _ := New() // Create a new monotonically increasing counter
-
-	// Fetch the first 10 sequence ids.
-	for {
-		idx, _ := seq.Next()
-		if idx > 10 {
-			break
-		}
-
-		fmt.Printf("%d ", idx)
-	}
-
-	// Output:
-	// 1 2 3 4 5 6 7 8 9 10
-}
-
 // Test the restart functionality
-func TestRestart(t *testing.T) {
-	seq, err := New()
+func TestRestartAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -114,8 +92,8 @@ func TestRestart(t *testing.T) {
 }
 
 // Test the non-initialized restart error
-func TestRestartInitError(t *testing.T) {
-	seq := &Sequence{}
+func TestRestartInitErrorAtomic(t *testing.T) {
+	seq := &AtomicSequence{}
 	if seq.initialized {
 		t.Error("sequence is initialized for some reason?")
 	}
@@ -127,8 +105,8 @@ func TestRestartInitError(t *testing.T) {
 }
 
 // Test the update functionality
-func TestUpdate(t *testing.T) {
-	seq, err := New()
+func TestUpdateAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -163,8 +141,8 @@ func TestUpdate(t *testing.T) {
 }
 
 // Test update violation errors
-func TestBadUpdate(t *testing.T) {
-	seq, err := New()
+func TestBadUpdateAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -194,36 +172,9 @@ func TestBadUpdate(t *testing.T) {
 	}
 }
 
-// An example of updating a sequence.
-func ExampleSequence_Update() {
-	var idx uint64
-	seq, _ := New()
-
-	seq.Next()
-	idx, _ = seq.Current()
-	fmt.Println(idx)
-
-	seq.Update(42)
-	idx, _ = seq.Current()
-	fmt.Println(idx)
-
-	seq.Next()
-	idx, _ = seq.Current()
-	fmt.Println(idx)
-
-	err := seq.Update(42)
-	fmt.Println(err)
-
-	// Output:
-	// 1
-	// 42
-	// 43
-	// cannot decrease monotonically increasing sequence
-}
-
 // Test the get current state functionality
-func TestCurrent(t *testing.T) {
-	seq, err := New()
+func TestCurrentAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -249,8 +200,8 @@ func TestCurrent(t *testing.T) {
 }
 
 // Insure that unintialized sequences return an error on Current
-func TestCurrentInitError(t *testing.T) {
-	seq := &Sequence{}
+func TestCurrentInitErrorAtomic(t *testing.T) {
+	seq := &AtomicSequence{}
 	if seq.initialized {
 		t.Error("sequence is initialized for some reason?")
 	}
@@ -266,8 +217,8 @@ func TestCurrentInitError(t *testing.T) {
 }
 
 // Test the is started functionality
-func TestIsStarted(t *testing.T) {
-	seq, err := New()
+func TestIsStartedAtomic(t *testing.T) {
+	seq, err := NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -282,31 +233,17 @@ func TestIsStarted(t *testing.T) {
 	}
 }
 
-// An example of the human readable state of a sequence.
-func ExampleSequence_String() {
-	seq, _ := New()
-
-	fmt.Println(seq)
-
-	seq.Next()
-	fmt.Println(seq)
-
-	// Output:
-	// Unstarted Sequence incremented by 1 between 1 and 18446744073709551614
-	// Sequence at 1, incremented by 1 between 1 and 18446744073709551614
-}
-
 //===========================================================================
 // Test Sequence Serialization
 //===========================================================================
 
 // Test the sequence state dump and load functionality.
-func TestSerialization(t *testing.T) {
+func TestSerializationAtomic(t *testing.T) {
 	var err error
-	var seqa *Sequence
-	var seqb *Sequence
+	var seqa *AtomicSequence
+	var seqb *AtomicSequence
 
-	seqa, err = New()
+	seqa, err = NewAtomic()
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -323,7 +260,7 @@ func TestSerialization(t *testing.T) {
 	}
 
 	// Load the new sequence
-	seqb = &Sequence{}
+	seqb = &AtomicSequence{}
 	err = seqb.Load(data)
 	if err != nil {
 		t.Error(err.Error())
@@ -341,50 +278,13 @@ func TestSerialization(t *testing.T) {
 
 }
 
-// Write a sequence to disk to be loaded later.
-func ExampleSequence_Dump() {
-
-	seq := new(Sequence)
-	seq.Init()
-
-	for i := 0; i < 10; i++ {
-		seq.Next()
-	}
-
-	data, _ := seq.Dump()
-	fmt.Println(string(data))
-
-	// Output:
-	// {"current":10,"increment":1,"maxvalue":18446744073709551614,"minvalue":1}
-}
-
-// An example of sequence serialization.
-func ExampleSequence_Load() {
-
-	seq := new(Sequence)
-	seq.Init()
-
-	for i := 0; i < 10; i++ {
-		seq.Next()
-	}
-
-	data, _ := seq.Dump()
-
-	sequel := new(Sequence)
-	sequel.Load(data)
-	fmt.Println(sequel)
-
-	// Output:
-	// Sequence at 10, incremented by 1 between 1 and 18446744073709551614
-}
-
 //===========================================================================
 // Test Initialization
 //===========================================================================
 
 // Test the creation of a default Sequence object using Init instead of New.
-func TestDefaultInit(t *testing.T) {
-	seq := new(Sequence)
+func TestDefaultInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init()
 	if err != nil {
 		t.Error(err.Error())
@@ -408,8 +308,8 @@ func TestDefaultInit(t *testing.T) {
 }
 
 // Do not allow an initialized sequence to be reinitialized
-func TestNoDupInit(t *testing.T) {
-	seq := &Sequence{}
+func TestNoDupInitAtomic(t *testing.T) {
+	seq := &AtomicSequence{}
 	err := seq.Init()
 	if err != nil {
 		t.Error(err.Error())
@@ -426,8 +326,8 @@ func TestNoDupInit(t *testing.T) {
 }
 
 // Test single argument init
-func Test1ArgInit(t *testing.T) {
-	seq := new(Sequence)
+func Test1ArgInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(100)
 	if err != nil {
 		t.Error(err.Error())
@@ -451,8 +351,8 @@ func Test1ArgInit(t *testing.T) {
 }
 
 // Ensure single argument is greater than 0
-func Test1ArgInitZero(t *testing.T) {
-	seq := new(Sequence)
+func Test1ArgInitZeroAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(0)
 	if err == nil {
 		t.Error("should error when zero is passed to single init!")
@@ -460,8 +360,8 @@ func Test1ArgInitZero(t *testing.T) {
 }
 
 // Test the creation of a positive range
-func Test2ArgInit(t *testing.T) {
-	seq := new(Sequence)
+func Test2ArgInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(10, 100)
 	if err != nil {
 		t.Error(err.Error())
@@ -485,8 +385,8 @@ func Test2ArgInit(t *testing.T) {
 }
 
 // Test the creation a positive range failures
-func Test2ArgBadInit(t *testing.T) {
-	seq := new(Sequence)
+func Test2ArgBadInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(100, 10)
 	if err == nil {
 		t.Error("should not allow second param to be less than first")
@@ -494,8 +394,8 @@ func Test2ArgBadInit(t *testing.T) {
 }
 
 // Test the creation zeroed positive range failures
-func Test2ArgZeroInit(t *testing.T) {
-	seq := new(Sequence)
+func Test2ArgZeroInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(0, 10)
 	if err == nil {
 		t.Error("should not allow zero valued ranges")
@@ -503,8 +403,8 @@ func Test2ArgZeroInit(t *testing.T) {
 }
 
 // Test the creation of a positive range
-func Test3ArgInitPos(t *testing.T) {
-	seq := new(Sequence)
+func Test3ArgInitPosAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(10, 100, 5)
 	if err != nil {
 		t.Error(err.Error())
@@ -528,8 +428,8 @@ func Test3ArgInitPos(t *testing.T) {
 }
 
 // Ensure there is no zero step
-func Test3ArgInitZero(t *testing.T) {
-	seq := new(Sequence)
+func Test3ArgInitZeroAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(10, 100, 0)
 	if err == nil {
 		t.Error("allowed zero value step!?")
@@ -537,8 +437,8 @@ func Test3ArgInitZero(t *testing.T) {
 }
 
 // Test minimum step error
-func Test3ArgInitStepBang(t *testing.T) {
-	seq := new(Sequence)
+func Test3ArgInitStepBangAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(1, 100, 2)
 	if err == nil {
 		t.Error("allowed step greater than minimum value!?")
@@ -546,8 +446,8 @@ func Test3ArgInitStepBang(t *testing.T) {
 }
 
 // Ensure there is an error on more than three args
-func Test4ArgInit(t *testing.T) {
-	seq := new(Sequence)
+func Test4ArgInitAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	err := seq.Init(10, 100, 4, 20)
 	if err == nil {
 		t.Error("allowed four arguments!?")
@@ -559,9 +459,9 @@ func Test4ArgInit(t *testing.T) {
 //===========================================================================
 
 // Test that sequence goes to the maximum value then errors
-func TestCeiling(t *testing.T) {
+func TestCeilingAtomic(t *testing.T) {
 	// Create a sequence right at the maximum bound.
-	seq := &Sequence{MaximumBound - 1, 1, MinimumBound, MaximumBound, true}
+	seq := &AtomicSequence{MaximumBound - 1, 1, MinimumBound, MaximumBound, true}
 
 	idx, err := seq.Next()
 	if err != nil {
@@ -583,8 +483,8 @@ func TestCeiling(t *testing.T) {
 }
 
 // Test an increment value of 3 with intermediate range.
-func TestIncrement(t *testing.T) {
-	seq := new(Sequence)
+func TestIncrementAtomic(t *testing.T) {
+	seq := new(AtomicSequence)
 	seq.Init(3, 10000, 3)
 
 	for i := uint64(3); i < 30; i += 3 {
@@ -596,9 +496,9 @@ func TestIncrement(t *testing.T) {
 }
 
 // Test that sequence goes to the maximum value then errors on increment
-func TestCeilingIncrement(t *testing.T) {
+func TestCeilingIncrementAtomic(t *testing.T) {
 	// Create a sequence right at the maximum bound.
-	seq := &Sequence{MaximumBound - 1, 2, MinimumBound, MaximumBound, true}
+	seq := &AtomicSequence{MaximumBound - 1, 2, MinimumBound, MaximumBound, true}
 
 	jdx, err := seq.Next()
 	if err == nil {
@@ -611,8 +511,8 @@ func TestCeilingIncrement(t *testing.T) {
 }
 
 // Test a maximum value.
-func TestMaximum(t *testing.T) {
-	seq, err := New(32132)
+func TestMaximumAtomic(t *testing.T) {
+	seq, err := NewAtomic(32132)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -641,8 +541,8 @@ func TestMaximum(t *testing.T) {
 
 // Test a range, note that the monotonically increasing counter range will
 // timeout before tests can be completed.
-func TestRange(t *testing.T) {
-	seq, err := New(23, 231342)
+func TestRangeAtomic(t *testing.T) {
+	seq, err := NewAtomic(23, 231342)
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -669,15 +569,43 @@ func TestRange(t *testing.T) {
 	}
 }
 
+func TestIfAtomicIsSafeForConcurrentUse(t *testing.T) {
+	seq, err := NewAtomic()
+	if err != nil {
+		t.Error(err)
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		var i uint64
+		for ; i < math.MaxUint16; i++ {
+			seq.Next()
+		}
+	}()
+	go func() {
+		defer wg.Done()
+		// keep reading current
+		var i uint64
+		for ; i < math.MaxUint16; i++ {
+			seq.Current()
+		}
+	}()
+
+	wg.Wait()
+}
+
 //===========================================================================
 // Benchmarks
 //===========================================================================
 
-func BenchmarkSequence(b *testing.B) {
+func BenchmarkSequenceAtomic(b *testing.B) {
 	var s uint64
 	f := func(u uint64) {}
 
-	seq, err := New()
+	seq, err := NewAtomic()
 	if err != nil {
 		b.Error(err.Error())
 	}
